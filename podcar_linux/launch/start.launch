@@ -1,0 +1,8 @@
+<launch>
+  <!--node name="rosserial_python_node" pkg="rosserial_python" type="message_info_service.py"/-->
+
+  <node name="rosserial_server_node" pkg="rosserial_server" type="socket_node"/>
+  
+  <!--node name="joystick_control" pkg="podcar" type="joystick.py"/-->
+
+</launch>
