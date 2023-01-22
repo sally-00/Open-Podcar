@@ -24,6 +24,9 @@ int current_pos, desired_pos, diff=0;
 float desired_steer, desired_speed;
 bool USE_ROS=false;
 
+// range of gimson GLA750-P is [1~3680] -> [0 cm, 12.5 cm]
+// the middle is 1300 -> 6.25 cm. map the steering based on the middle
+
 // setup DAC for speed control
 Adafruit_MCP4725 Throttle;
 uint16_t ThrottleDACValue = DACCentre; //Value for ThrottleDACValue after reset/powerup
@@ -225,8 +228,14 @@ void read_steering(uint8_t iter){
     current_pos = current_pos/10;
     // desired_steer:[-1,1] need to be mapped to desired_pos:[?]
     diff = current_pos - desired_pos;
+    Serial.print("diff: ");
+    Serial.print(diff);
+    Serial.print(" ");
     Serial.print("current_pos: ");
     Serial.println(current_pos);
-    int16_msg.data = current_pos;
-    Linear_actuator_pos.publish( &int16_msg );
+
+    if (USE_ROS){
+        int16_msg.data = current_pos;
+        Linear_actuator_pos.publish( &int16_msg );
+    }
 }
