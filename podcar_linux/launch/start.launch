@@ -3,6 +3,6 @@
 
   <node name="rosserial_server_node" pkg="rosserial_server" type="socket_node"/>
   
-  <!--node name="joystick_control" pkg="podcar" type="joystick.py"/-->
+  <!--node name="joystick_control" pkg="podcar_linux" type="joystick.py"/-->
 
 </launch>
