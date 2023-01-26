@@ -7,7 +7,7 @@ We have changed components and improved the PCB layout to allow more flexibility
 ## Linear Actuator Demostration
 A demostration of controlling the linear actuator with the joystick which pass the steer command to the ESP32 through ROS using Wi-Fi is shown as follows.
 
-[IMG_9704.MOV](./ReadmeDocs/IMG_9704.MOV)
+[IMG_9704.mov](./ReadmeDocs/IMG_9704.mov)
 
 ## PCB design
 The final schematic of the PCB is shown as follows.
