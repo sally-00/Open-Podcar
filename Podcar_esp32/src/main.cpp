@@ -63,8 +63,9 @@ void speed_msg_cb(const std_msgs::Float32 &msg){
 ros::Subscriber<std_msgs::Float32> steer_sub("steering_cmd", &steering_msg_cb);
 ros::Subscriber<std_msgs::Float32> speed_sub("speed_cmd", &speed_msg_cb);
 std_msgs::Int16 int16_msg;
+std_msgs::Float32 float32_msg;
 ros::Publisher Linear_actuator_pos("linear_actuator_pos", &int16_msg);
-
+ros::Publisher Battery_voltage("battery_voltage", &float32_msg);
 
 // Forward declarations
 void detect_I2C_device();
@@ -97,6 +98,7 @@ void setup() {
         nh.initNode();
         Serial.println(" ros init complete ");
         nh.advertise(Linear_actuator_pos);
+        nh.advertise(Battery_voltage);
         nh.subscribe(steer_sub);
         nh.subscribe(speed_sub);
         nh.spinOnce();
@@ -164,6 +166,10 @@ void loop() {
     // measure current battery voltage
     voltage_reading = analogRead(batt_vol);
     battery_voltage = voltage_reading * (3.3/1023) * RATIO;
+    if (USE_ROS){
+        float32_msg.data = battery_voltage;
+        Battery_voltage.publish( &float32_msg );
+    }
     
     
     if (USE_ROS){
