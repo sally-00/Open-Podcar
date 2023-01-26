@@ -43,7 +43,7 @@
 
 // This will change based on the resistor you use for the linear actuator
 #define LA_LOWER_LIMIT 0
-#define LA_UPPER_LIMIT 0
+#define LA_UPPER_LIMIT 3680
 
 // setup limits for DAC; speed control
 uint16_t DACCentre                = 1679;  // new DAC value found in July 2019 -- Charles & Fanta 
