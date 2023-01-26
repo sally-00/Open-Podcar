@@ -4,6 +4,20 @@ This is a project extended from [OpenPodcar](https://github.com/OpenPodcar/OpenP
 
 We have changed components and improved the PCB layout to allow more flexibility in the system and ensure safty while operating the car.
 
+## Linear Actuator Demostration
+A demostration of controlling the linear actuator with the joystick which pass the steer command to the ESP32 through ROS using Wi-Fi is shown as follows.
+
+[IMG_9704.MOV](./ReadmeDocs/IMG_9704.MOV)
+
+## PCB design
+The final schematic of the PCB is shown as follows.
+
+![PCB_schematics.jpeg](./ReadmeDocs/PCB_schematics.jpeg)
+
+The layout of the PCB at the current stage is shown as follows.
+
+![PCB.jpeg](./ReadmeDocs/PCB.jpeg)
+
 ## Bill of Materials
 
 #### Vehicle
