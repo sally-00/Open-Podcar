@@ -41,9 +41,12 @@
 // linear actuator position reading pin
 #define position_pin 35
 
-// This will change based on the resistor you use for the linear actuator
+// This will change based on the resistor you use for the linear actuator and the linear actuator length
+// range of gimson GLA750-P is [1~3680] -> [0 cm, 12.5 cm]
+// the middle is 1300 -> 6.25 cm. map the steering based on the middle
 #define LA_LOWER_LIMIT 0
 #define LA_UPPER_LIMIT 3680
+#define LA_MIDDLE 1300
 
 // setup limits for DAC; speed control
 uint16_t DACCentre                = 1679;  // new DAC value found in July 2019 -- Charles & Fanta 

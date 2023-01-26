@@ -3,14 +3,22 @@
 #include <Wire.h>
 #include <Adafruit_MCP4725.h>
 #include <ros.h>
+#include <chrono>
 #include "motor.h"
 #include "WiFiconection.h"
+#include "utilities.h"
 #include <std_msgs/String.h>
 #include <std_msgs/Int16.h>
+#include <std_msgs/Float32.h>
 
 // variable ThrottleDACValue is used to drive the car, 
 // make sure the values are correct for safety.
 // Stopping the car is ThrottleDACValue = DACCentre, NOT 0.
+
+using std::chrono::high_resolution_clock;
+using std::chrono::duration_cast;
+using std::chrono::duration;
+using std::chrono::milliseconds;
 
 /*
 int Kp = 1, Ki = 1, Kd = 1;
@@ -22,10 +30,7 @@ float output;
 int direction, speed;
 int current_pos, desired_pos, diff=0;
 float desired_steer, desired_speed;
-bool USE_ROS=false;
-
-// range of gimson GLA750-P is [1~3680] -> [0 cm, 12.5 cm]
-// the middle is 1300 -> 6.25 cm. map the steering based on the middle
+bool USE_ROS=true;
 
 // setup DAC for speed control
 Adafruit_MCP4725 Throttle;
@@ -33,32 +38,39 @@ uint16_t ThrottleDACValue = DACCentre; //Value for ThrottleDACValue after reset/
 uint16_t battery_voltage = 0;
 uint16_t voltage_reading = 0;
 
+
 // setup ros node with publish and subscrib
 ros::NodeHandle nh;
 // the range of speed and steer msg are both -1 to 1
-void steering_msg_cb(const std_msgs::Int16 &msg){
+void steering_msg_cb(const std_msgs::Float32 &msg){
     desired_steer = msg.data;
-    desired_pos = map(desired_steer, -1, 1, LA_LOWER_LIMIT, LA_UPPER_LIMIT);
+    if (desired_steer>=0 ){
+        desired_pos = translate(desired_steer, 0, 1, LA_MIDDLE, LA_UPPER_LIMIT);
+    }else{
+        desired_pos = translate(desired_steer, -1, 0, LA_LOWER_LIMIT, LA_MIDDLE);
+    }
 }
-void speed_msg_cb(const std_msgs::Int16 &msg){
+void speed_msg_cb(const std_msgs::Float32 &msg){
     desired_speed = msg.data;
     // map desired_speed ([-1,1]) to ThrottleDACValue ([DAC_Lower_LIMIT, DAC_Upper_LIMIT])
     if (desired_speed >= 0){
-        ThrottleDACValue = map(desired_speed, 0, 1, 0, DAC_Upper_LIMIT);
+        ThrottleDACValue = translate(desired_speed, 0, 1, DACCentre, DAC_Lower_LIMIT);
     }else{
-        ThrottleDACValue = map(desired_speed, -1, 0, DAC_Lower_LIMIT, 0);
+        ThrottleDACValue = translate(desired_speed, -1, 0, DAC_Upper_LIMIT, DACCentre);
     }
     // ThrottleDACValue = msg.data;
 }
-ros::Subscriber<std_msgs::Int16> steer_sub("steering_cmd", &steering_msg_cb);
-ros::Subscriber<std_msgs::Int16> speed_sub("speed_cmd", &speed_msg_cb);
+ros::Subscriber<std_msgs::Float32> steer_sub("steering_cmd", &steering_msg_cb);
+ros::Subscriber<std_msgs::Float32> speed_sub("speed_cmd", &speed_msg_cb);
 std_msgs::Int16 int16_msg;
 ros::Publisher Linear_actuator_pos("linear_actuator_pos", &int16_msg);
+
 
 // Forward declarations
 void detect_I2C_device();
 void reconnect_WiFi();
 void read_steering(uint8_t iter);
+
 
 void setup() {
     Serial.begin(115200);
@@ -103,9 +115,13 @@ void setup() {
     ledcSetup(Steering_CH_2, freq, resolution);
     ledcAttachPin(LPWM_Output, Steering_CH_2);
     
-    Serial.println("Please enter the desired position...");
-    while (Serial.available()==0) {}
-    desired_pos = Serial.parseInt();
+    if (!USE_ROS){
+        Serial.println("Please enter the desired position...");
+        while (Serial.available()==0) {}
+        desired_pos = Serial.parseInt();
+    }else{
+        desired_pos = LA_MIDDLE;
+    }
 
     
 }
@@ -117,7 +133,7 @@ void loop() {
     Throttle.setVoltage(ThrottleDACValue, false);
 
     // give command to the linear actuator
-    if (abs(diff) < 10){
+    if (abs(diff) < 15){
         brake();
     }else{
         if (diff > 0){ // linear actuator is too long
@@ -147,7 +163,7 @@ void loop() {
 
     // measure current battery voltage
     voltage_reading = analogRead(batt_vol);
-    battery_voltage = voltage_reading * (5.0/1023) * RATIO;
+    battery_voltage = voltage_reading * (3.3/1023) * RATIO;
     
     
     if (USE_ROS){
@@ -221,18 +237,33 @@ void reconnect_WiFi(){
 }
 
 void read_steering(uint8_t iter){
+    auto t1 = high_resolution_clock::now();
     current_pos = 0;
-    for (uint8_t i = 0; i < 10; i++){
+    int count_num = 0;
+    while (true){
         current_pos += analogRead(position_pin);
+        count_num += 1;
+        auto t2 = high_resolution_clock::now();
+        /* Getting number of milliseconds as an integer. */
+        auto ms_int = duration_cast<milliseconds>(t2 - t1);
+        if (ms_int.count() > 50){
+            break;
+        }
     }
-    current_pos = current_pos/10;
+    current_pos = current_pos/count_num;
     // desired_steer:[-1,1] need to be mapped to desired_pos:[?]
     diff = current_pos - desired_pos;
-    Serial.print("diff: ");
-    Serial.print(diff);
+    Serial.print("ThrottleDACValue: ");
+    Serial.print(ThrottleDACValue);
+    Serial.print(" ");
+    Serial.print("desired_pos: ");
+    Serial.print(desired_pos);
     Serial.print(" ");
     Serial.print("current_pos: ");
-    Serial.println(current_pos);
+    Serial.print(current_pos);
+    Serial.print(" ");
+    Serial.print("num of readings: ");
+    Serial.println(count_num);
 
     if (USE_ROS){
         int16_msg.data = current_pos;
