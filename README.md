@@ -12,7 +12,11 @@ A demostration of controlling the linear actuator with the joystick which pass t
 
 <a href="https://youtu.be/pCknVWg_ioM
 " target="_blank"><img src="http://img.youtube.com/vi/pCknVWg_ioM/0.jpg" 
-alt="Linear Actuator Control Demostration" width="480" height="360" border="10" /></a>
+alt="Linear Actuator Joystick Control Demostration" width="480" height="360" border="10" /></a>
+
+<a href="https://youtu.be/71_QIT539q4
+" target="_blank"><img src="http://img.youtube.com/vi/71_QIT539q4/0.jpg" 
+alt="Linear Actuator Steering Demostration" width="480" height="360" border="10" /></a>
 
 ## PCB design
 The final schematic of the PCB is shown as follows.
