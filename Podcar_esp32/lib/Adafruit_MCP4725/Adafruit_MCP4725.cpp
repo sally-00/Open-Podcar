@@ -44,7 +44,8 @@ Adafruit_MCP4725::Adafruit_MCP4725() {
 void Adafruit_MCP4725::begin(uint8_t addr) {
   _i2caddr = addr;
   Wire.begin();
-
+  //TwoWire I2C1 = TwoWire(0); //I2C1 bus
+  //I2C1.begin(SDA1, SCL1, 100000); // Start I2C1 on pins 21 and 22
 }
  
 /**************************************************************************/

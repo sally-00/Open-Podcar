@@ -44,20 +44,23 @@
 // This will change based on the resistor you use for the linear actuator and the linear actuator length
 // range of gimson GLA750-P is [1~3680] -> [0 cm, 12.5 cm]
 // the middle is 1300 -> 6.25 cm. map the steering based on the middle
-#define LA_LOWER_LIMIT 0
-#define LA_UPPER_LIMIT 3680
-#define LA_MIDDLE 1300
+uint16_t const LA_LOWER_LIMIT           = 0;
+uint16_t const LA_UPPER_LIMIT           = 3680;
+uint16_t const LA_MIDDLE                = 1300;
 
 // setup limits for DAC; speed control
-uint16_t DACCentre                = 1679;  // new DAC value found in July 2019 -- Charles & Fanta 
-uint16_t DAC_Upper_LIMIT          = 2519; // DO NOT CHANGE - COULD DAMAGE SCOOTER CIRCUIT
-uint16_t DAC_Lower_LIMIT          = 1000; // DO NOT CHANGE - COULD DAMAGE SCOOTER CIRCUIT 
-uint16_t DACFullScale             = 4095; // 12bit DAC
+uint16_t const DACCentre                = 1679;  // new DAC value found in July 2019 -- Charles & Fanta 
+uint16_t const DAC_Upper_LIMIT          = 2519; // DO NOT CHANGE - COULD DAMAGE SCOOTER CIRCUIT
+uint16_t const DAC_Lower_LIMIT          = 1000; // DO NOT CHANGE - COULD DAMAGE SCOOTER CIRCUIT 
+uint16_t const DACFullScale             = 4095; // 12bit DAC
 
 // setup pins for reading battery voltage
 #define batt_vol 34
 #define RATIO  1/11
 
-// additional I2C for LCD display
-#define SDA2 17
-#define SCL2 16
+// I2C for DAC
+#define SDA1 21
+#define SCL1 22
+
+// Relay pin
+#define Relay 18

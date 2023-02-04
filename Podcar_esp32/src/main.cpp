@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <Adafruit_MCP4725.h>
+#include <Adafruit_LEDBackpack.h>
 #include <ros.h>
 #include <chrono>
 #include "motor.h"
@@ -30,14 +31,16 @@ float output;
 int direction, speed;
 int current_pos, desired_pos, diff=0;
 float desired_steer, desired_speed;
-bool USE_ROS=true;
+bool USE_ROS=false;
 
 // setup DAC for speed control
 Adafruit_MCP4725 Throttle;
 uint16_t ThrottleDACValue = DACCentre; //Value for ThrottleDACValue after reset/powerup
-uint16_t battery_voltage = 0;
+float battery_voltage = 0;
 uint16_t voltage_reading = 0;
 
+// for display the battery voltage
+Adafruit_7segment LCD = Adafruit_7segment();
 
 // setup ros node with publish and subscrib
 ros::NodeHandle nh;
@@ -105,9 +108,16 @@ void setup() {
         delay(10);
     }
 
+    // set up LCD
+    Wire.begin();
+    LCD.begin(0x70);
+
     // setup DAC
-    Throttle.begin(0x62);//0x60
+    Throttle.begin(0x62);
     delay(10);
+
+    // setup Relay
+    pinMode(Relay, OUTPUT);
     
     // setup PWM pins
     pinMode(RPWM_Output, OUTPUT);
@@ -116,6 +126,13 @@ void setup() {
     ledcAttachPin(RPWM_Output, Steering_CH_1);
     ledcSetup(Steering_CH_2, freq, resolution);
     ledcAttachPin(LPWM_Output, Steering_CH_2);
+
+    /* 
+    // for checking the address of the I2C devices.
+    while (true){
+        detect_I2C_device();
+    }
+    */
     
     if (!USE_ROS){
         Serial.println("Please enter the desired position...");
@@ -130,9 +147,11 @@ void setup() {
 
 
 void loop() {
-
     // set speed
     Throttle.setVoltage(ThrottleDACValue, false);
+
+    // set relay
+    digitalWrite(Relay, HIGH);
 
     // give command to the linear actuator
     if (abs(diff) < 15){
@@ -166,6 +185,15 @@ void loop() {
     // measure current battery voltage
     voltage_reading = analogRead(batt_vol);
     battery_voltage = voltage_reading * (3.3/1023) * RATIO;
+    // print voltage on the LCD
+    int v = round(battery_voltage * 100);
+    boolean drawDots = false;
+    LCD.writeDigitNum(0, (v / 1000), drawDots);
+    LCD.writeDigitNum(1, (v / 100) % 10, drawDots);
+    LCD.drawColon(true);
+    LCD.writeDigitNum(3, (v / 10) % 10, drawDots);
+    LCD.writeDigitNum(4, v % 10, drawDots);
+    LCD.writeDisplay();
     if (USE_ROS){
         float32_msg.data = battery_voltage;
         Battery_voltage.publish( &float32_msg );
@@ -195,51 +223,6 @@ void loop() {
     Serial.println(output);
     */
 
-}
-
-void detect_I2C_device(){
-    byte error, address;
-    int nDevices;
-    Serial.println("Scanning...");
-    nDevices = 0;
-    for(address = 1; address < 127; address++ ) {
-    Wire.beginTransmission(address);
-    error = Wire.endTransmission();
-    if (error == 0) {
-        Serial.print("I2C device found at address 0x");
-        if (address<16) {
-        Serial.print("0");
-        }
-        Serial.println(address,HEX);
-        nDevices++;
-    }
-    else if (error==4) {
-        Serial.print("Unknow error at address 0x");
-        if (address<16) {
-        Serial.print("0");
-        }
-        Serial.println(address,HEX);
-    }    
-    }
-    if (nDevices == 0) {
-        Serial.println("No I2C devices found\n");
-    }
-    else {
-        Serial.println("done\n");
-    }
-    delay(5000); 
-}
-
-void reconnect_WiFi(){
-    Serial.println("Reconnecting to WiFi...");
-    WiFi.disconnect();
-    WiFi.reconnect();
-    Serial.print("WiFi reconnecting");
-    while (WiFi.status() != WL_CONNECTED) {
-        Serial.println("....");
-        delay(100);
-    }
-    Serial.print("WiFi reconnected");
 }
 
 void read_steering(uint8_t iter){
@@ -275,4 +258,49 @@ void read_steering(uint8_t iter){
         int16_msg.data = current_pos;
         Linear_actuator_pos.publish( &int16_msg );
     }
+}
+
+void detect_I2C_device(){
+    byte error, address;
+    int nDevices;
+    Serial.println("Scanning...");
+    nDevices = 0;
+    for(address = 1; address < 127; address++ ) {
+        Wire.beginTransmission(address);
+        error = Wire.endTransmission();
+        if (error == 0) {
+            Serial.print("I2C device found at address 0x");
+            if (address<16) {
+            Serial.print("0");
+            }
+            Serial.println(address,HEX);
+            nDevices++;
+        }
+        else if (error==4) {
+            Serial.print("Unknow error at address 0x");
+            if (address<16) {
+            Serial.print("0");
+            }
+            Serial.println(address,HEX);
+        }    
+    }
+    if (nDevices == 0) {
+        Serial.println("No I2C devices found\n");
+    }
+    else {
+        Serial.println("done\n");
+    }
+    delay(5000); 
+}
+
+void reconnect_WiFi(){
+    Serial.println("Reconnecting to WiFi...");
+    WiFi.disconnect();
+    WiFi.reconnect();
+    Serial.print("WiFi reconnecting");
+    while (WiFi.status() != WL_CONNECTED) {
+        Serial.println("....");
+        delay(100);
+    }
+    Serial.print("WiFi reconnected");
 }
